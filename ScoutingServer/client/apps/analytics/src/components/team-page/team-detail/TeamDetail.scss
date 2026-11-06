@@ -1,0 +1,69 @@
+
+.team-detail {
+	display: flex;
+	flex-direction: column;
+	height: fit-content;
+
+	.team-number {
+		display: flex;
+		column-gap: 16px;
+		padding-bottom: 8px;
+		font-weight: 600;
+		font-size: 32px;
+		line-height: 36px;
+	}
+
+	#view-notes-button {
+		margin-left: 16px;
+	}
+
+	.external-links {
+		display: flex;
+		flex-direction: row;
+		gap: 24px;
+		padding-bottom: 8px;
+	}
+
+	.gamemode-list {
+		display: flex;
+		flex-direction: column;
+		row-gap: 32px;
+		padding-top: 20px;
+
+		.gamemode {
+
+			&-title {
+				font-weight: 600;
+				font-size: 24px;
+				line-height: 28px;
+				text-decoration: underline;
+			}
+
+			&-stats-wrapper {
+				display: flex;
+				flex-direction: row;
+				flex-flow: wrap;
+				row-gap: 12px;
+				column-gap: 24px;
+				padding-top: 12px;
+				padding-left: 8px;
+
+				.stats {
+					.objective-name {
+						font-weight: 500;
+						font-size: 18px;
+						line-height: 20px;
+						margin-bottom: 4px;
+					}
+
+					.objective-stat {
+						font-size: 16px;
+						line-height: 18px;
+						white-space: nowrap;
+					}
+				}
+			}
+		}
+
+	}
+}

@@ -1,0 +1,741 @@
+openapi: 3.0.3
+info:
+  title: GearScout Server
+  description: A server for hosting FRC scouting data. Designed and developed by
+    Gear It Forward (Team \#2338), and open for any teams to use.
+  version: 3.1.0
+servers:
+  - url: 'https://data.gearitforward.com/api'
+    description: Production server
+tags:
+  - name: Users
+  - name: Matches
+    description: Quantitative match info
+  - name: Comments
+    description: Qualitative notes
+  - name: Inspections
+    description: Pit scouting
+paths:
+  /v1/hello:
+    get:
+      summary: Check server liveness
+      description: Returns a simple "Hello World" string to check if the server is responsive
+      responses:
+        '200':
+          description: A "Hello World" string.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /v2/auth/login:
+    post:
+      tags: [Users]
+      summary: Log in
+      description: Attempts to authenticate a user and provide a login token
+      requestBody:
+        description: The user's login credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestBody'
+      responses:
+        '200':
+          description: 'Credentials of authenticated user'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponseBody'
+        '404':
+          description: 'Provided credentials did not match an existing user'
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v2/user:
+    post:
+      tags: [Users]
+      summary: Create user
+      description: Create a new (unverified) user for a team. A user must receive
+        verification to unlock certain features. Contact GiF to receive verification.
+      requestBody:
+        description: User information and credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequestBody'
+      responses:
+        '201':
+          description: Successfully created user and logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponseBody'
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v1/team/{teamNumber}/gameYear/{gameYear}/event/{eventCode}:
+    parameters:
+      - $ref: '#/components/parameters/teamNumberPathParam'
+      - $ref: '#/components/parameters/gameYearPathParam'
+      - $ref: '#/components/parameters/eventCodePathParam'
+      - $ref: '#/components/parameters/secretCodeHeaderParam'
+    get:
+      tags: [Matches]
+      summary: Get matches
+      description: Returns the list of scouted matches for an event
+      responses:
+        '200':
+          description: The list of matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchResponseBody'
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v1/team/{teamNumber}/gameYear/{gameYear}/event/{eventCode}/download:
+    parameters:
+      - $ref: '#/components/parameters/teamNumberPathParam'
+      - $ref: '#/components/parameters/gameYearPathParam'
+      - $ref: '#/components/parameters/eventCodePathParam'
+      - $ref: '#/components/parameters/secretCodeHeaderParam'
+    get:
+      tags: [Matches]
+      summary: Export matches as CSV
+      description: 'Returns CSV file with list of scouted matches for an event.
+        Note: this may have been broken with the `Match->list` parameter'
+      responses:
+        '200':
+          description: A list of matches in CSV format
+          content: # TODO: this should include the Content-Disposition header
+            text/csv:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v1/team/{teamNumber}:
+    parameters:
+      - $ref: '#/components/parameters/teamNumberPathParam'
+      - $ref: '#/components/parameters/secretCodeHeaderParam'
+    post:
+      tags: [Matches]
+      summary: Add match
+      description: Creates a new match for a particular event and robot
+      requestBody:
+        description: The new match data to save
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMatchRequestBody'
+      responses:
+        '202':
+          description: Empty response body
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v1/team/{teamNumber}/match/{matchId}/hide:
+    parameters:
+      - $ref: '#/components/parameters/teamNumberPathParam'
+      - $ref: '#/components/parameters/matchIdPathParam'
+      - $ref: '#/components/parameters/secretCodeHeaderParam'
+    put:
+      tags: [Matches]
+      summary: Hide match
+      description: Marks a match as "hidden" so that it isn't included in analytics or CSV export
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdatedMatchResponse'
+        '404':
+          description: Could not find match with that ID and secret code
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v1/team/{teamNumber}/match/{matchId}/unhide:
+    parameters:
+      - $ref: '#/components/parameters/teamNumberPathParam'
+      - $ref: '#/components/parameters/matchIdPathParam'
+      - $ref: '#/components/parameters/secretCodeHeaderParam'
+    put:
+      tags: [Matches]
+      summary: Unhide match
+      description: Removes "hidden" state from match so that it gets included in analytics and CSV export
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdatedMatchResponse'
+        '404':
+          description: Could not find match with that ID and secret code
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v2/match/{matchId}/hide:
+    parameters:
+      - $ref: '#/components/parameters/matchIdPathParam'
+    put:
+      tags: [Matches]
+      summary: Hide match
+      description: Marks a match as "hidden" so that it isn't included in analytics or CSV export
+      security:
+        - tokenSecurity: []
+      parameters:
+        - $ref: '#/components/parameters/matchIdPathParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdatedMatchResponse'
+        '404':
+          description: Could not find match with that ID and secret code
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v2/match/{matchId}/unhide:
+    parameters:
+      - $ref: '#/components/parameters/matchIdPathParam'
+    put:
+      tags: [Matches]
+      summary: Unhide match
+      description: Removes "hidden" state from match so that it gets included in analytics and CSV export
+      security:
+        - tokenSecurity: []
+      parameters:
+        - $ref: '#/components/parameters/matchIdPathParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdatedMatchResponse'
+        '404':
+          description: Could not find match with that ID and secret code
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v2/notes/team/{teamNumber}/gameYear/{gameYear}/event/{eventCode}:
+    get:
+      tags: [Comments]
+      summary: Get comments
+      description: Get all comments associated with an event
+      parameters:
+        - $ref: '#/components/parameters/teamNumberPathParam'
+        - $ref: '#/components/parameters/gameYearPathParam'
+        - $ref: '#/components/parameters/eventCodePathParam'
+        - $ref: '#/components/parameters/secretCodeHeaderParam'
+      responses:
+        '200':
+          description: The list of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponseBody'
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v2/notes/team/{teamNumber}:
+    post:
+      tags: [Comments]
+      summary: Create comments
+      description: Create multiple comments
+      parameters:
+        - $ref: '#/components/parameters/teamNumberPathParam'
+        - $ref: '#/components/parameters/secretCodeHeaderParam'
+      requestBody:
+        description: A list of comments about a specific robot in a match
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentBulkRequestBody'
+      responses:
+        '200':
+          description: A list of the newly created comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponseBody'
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v1/detailnotes/team/{teamNumber}/gameYear/{gameYear}/event/{eventCode}:
+    get:
+      tags: [Inspections]
+      summary: Get inspections
+      description: Returns the list of inspections for an event
+      parameters:
+        - $ref: '#/components/parameters/teamNumberPathParam'
+        - $ref: '#/components/parameters/gameYearPathParam'
+        - $ref: '#/components/parameters/eventCodePathParam'
+        - $ref: '#/components/parameters/secretCodeHeaderParam'
+      responses:
+        '200':
+          description: The list of inspections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InspectionResponseBody'
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v1/detailnotes/team/{teamNumber}:
+    post:
+      tags: [Inspections]
+      summary: Add/update inspection questions
+      description: 'Attempts to save a set of question/answer pairs for a specific
+        robot at a specific event. If a question contained within the request has
+        already been uploaded for that robot, then the answer is updated. Otherwise,
+        the question/answer pair is added for that robot.'
+      parameters:
+        - $ref: '#/components/parameters/teamNumberPathParam'
+        - $ref: '#/components/parameters/secretCodeHeaderParam'
+      requestBody:
+        description: A list of question/answer pairs for a specific robot and event
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInspectionRequestBody'
+      responses:
+        '200':
+          description: Empty response body
+        default:
+          $ref: '#/components/responses/GeneralError'
+  /v2/schedule/gameYear/{gameYear}/event/{eventCode}:
+    parameters:
+      - $ref: '#/components/parameters/gameYearPathParam'
+      - $ref: '#/components/parameters/eventCodePathParam'
+    get:
+      summary: Fetch qualification match schedule for an event
+      description: The event code must match the official 4-5 character FIRST
+        event code, which can be found on FIRST's website. For example, the Midwest
+        regional's event code is ILCH. If the event code contains a hyphen, only
+        the characters before the hyphen will be considered when querying for match
+        schedule. Foe example, event codes ILCH and ILCH-2 will both fetch match
+        schedules for the Midwest regional.
+      responses:
+        '200':
+          description: A match schedule in JSON format
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchScheduleBody'
+  /v2/schedule/team/{teamNumber}/gameYear/{gameYear}/event/{eventCode}:
+    parameters:
+      - $ref: '#/components/parameters/teamNumberPathParam'
+      - $ref: '#/components/parameters/gameYearPathParam'
+      - $ref: '#/components/parameters/eventCodePathParam'
+    get:
+      summary: Fetch qualification match schedule for one team at an event.
+      responses:
+        '200':
+          description: A match schedule in JSON format
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchScheduleBody'
+
+components:
+  parameters:
+    teamNumberPathParam:
+      name: teamNumber
+      in: path
+      description: Team number that owns the data
+      required: true
+      schema:
+        $ref: '#/components/schemas/teamNumber'
+      style: simple
+    gameYearPathParam:
+      name: gameYear
+      in: path
+      description: Game year
+      required: true
+      schema:
+        $ref: '#/components/schemas/gameYear'
+      style: simple
+    eventCodePathParam:
+      name: eventCode
+      in: path
+      description: Name of the event that was scouted
+      required: true
+      schema:
+        $ref: '#/components/schemas/eventCode'
+      style: simple
+    matchIdPathParam:
+      name: matchId
+      in: path
+      description: ID of the match
+      required: true
+      schema:
+        $ref: '#/components/schemas/id'
+      style: simple
+    secretCodeHeaderParam:
+      name: secretCode
+      in: header
+      description: Secret phrase used to limit data access
+      required: true
+      schema:
+        $ref: '#/components/schemas/secretCode'
+      style: simple
+
+  responses:
+    UpdatedMatchResponse:
+      description: The updated match
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MatchResponseBody'
+    GeneralError:
+      description: Error payload
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/ErrorModel'
+  schemas:
+    id:
+      type: integer
+      format: int64
+      description: Unique entity ID
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 32
+      example: CorrectHorseBatteryStaple
+    token:
+      type: string
+      description: Auth token received upon login
+    teamNumber:
+      type: integer
+      format: int32
+      minimum: 0
+      description: Team number that owns the data
+      example: 2338
+    teamNumberSchedule:
+      type: integer
+      format: int32
+      minimum: 0
+      description: Team number in this match
+      example: 2338
+    gameYear:
+      type: integer
+      format: int32
+      example: 2025
+    eventCode:
+      type: string
+      minLength: 1
+      maxLength: 32
+      description: Name of the event that was scouted
+      example: MID2024
+    secretCode:
+      type: string
+      minLength: 1
+      maxLength: 32
+      description: Secret phrase used to limit data access
+      example: TeamSecret2338
+    matchNumber:
+      type: integer
+      format: int32
+      description: Event-defined, chronological match number
+      example: 12
+    robotNumber:
+      type: integer
+      format: int32
+      description: Team number of the robot being scouted
+      example: 111
+    username:
+      type: string
+      minLength: 1
+      maxLength: 32
+      example: Garrett Gears
+    creator:
+      type: string
+      minLength: 1
+      maxLength: 32
+      description: Name of the user that created this record
+      example: Garrett Gears
+    allianceColor:
+      type: string
+      minLength: 1
+      maxLength: 32
+      example: red
+    role:
+      type: string
+      description: Authorization level of the user
+      enum: [
+        'UNVERIFIED_MEMBER',
+        'VERIFIED_MEMBER',
+        'ADMIN',
+        'SUPERADMIN'
+      ]
+    unixTimestamp:
+      type: string
+      minLength: 8
+      maxLength: 32
+      description: 'This format is dumb :) It is the creation time of the record,
+        formatted as a unix timestamp. This will *eventually* be an ISO 8601 date-time'
+      example: 1735459715
+    commentTopic:
+      type: string
+      minLength: 1
+      maxLength: 32
+      description: Comment category, used for grouping and/or filtering
+      example: Driver skill
+    commentContent:
+      type: string
+      minLength: 1
+      maxLength: 1024
+      description: An observation
+      example: "They're awesome and calm under pressure!"
+    inspectionQuestion:
+      type: string
+      minLength: 1
+      maxLength: 32
+      description: Question header on a pit scouting form
+      example: Drivetrain type
+    inspectionAnswer:
+      type: string
+      minLength: 1
+      maxLength: 1024
+      description: Value entered into a pit scouting form
+      example: Swerve
+    UserEntity:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/id'
+        email:
+          $ref: '#/components/schemas/email'
+        teamNumber:
+          $ref: '#/components/schemas/teamNumber'
+        username:
+          $ref: '#/components/schemas/username'
+        role:
+          $ref: '#/components/schemas/role'
+    LoginRequestBody:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          $ref: '#/components/schemas/email'
+        password:
+          $ref: '#/components/schemas/password'
+    LoginResponseBody:
+      type: object
+      properties:
+        token:
+          $ref: '#/components/schemas/token'
+        user:
+          $ref: '#/components/schemas/UserEntity'
+    CreateUserRequestBody:
+      type: object
+      required: [email, password, teamNumber, username]
+      properties:
+        email:
+          $ref: '#/components/schemas/email'
+        password:
+          $ref: '#/components/schemas/password'
+        teamNumber:
+          $ref: '#/components/schemas/teamNumber'
+        username:
+          $ref: '#/components/schemas/username'
+    CreateMatchRequestBody:
+      type: object
+      properties:
+        gameYear:
+          $ref: '#/components/schemas/gameYear'
+        eventCode:
+          $ref: '#/components/schemas/eventCode'
+        matchNumber:
+          $ref: '#/components/schemas/matchNumber'
+        robotNumber:
+          $ref: '#/components/schemas/robotNumber'
+        creator:
+          $ref: '#/components/schemas/creator'
+        allianceColor:
+          $ref: '#/components/schemas/allianceColor'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveEntity'
+    MatchResponseBody:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/id'
+        gameYear:
+          $ref: '#/components/schemas/gameYear'
+        teamNumber:
+          $ref: '#/components/schemas/teamNumber'
+        secretCode:
+          $ref: '#/components/schemas/secretCode'
+        eventCode:
+          $ref: '#/components/schemas/eventCode'
+        matchNumber:
+          $ref: '#/components/schemas/matchNumber'
+        robotNumber:
+          $ref: '#/components/schemas/robotNumber'
+        creator:
+          $ref: '#/components/schemas/creator'
+        allianceColor:
+          $ref: '#/components/schemas/allianceColor'
+        timeCreated:
+          $ref: '#/components/schemas/unixTimestamp'
+        isHidden:
+          type: boolean
+          description: 'Whether this match should be excluded from statistics; it
+            is a substitute for deleting the data'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveEntity'
+    ObjectiveEntity:
+      type: object
+      required: [gamemode, objective, count]
+      properties:
+        id:
+          $ref: '#/components/schemas/id'
+        gamemode:
+          description: "Can be any arbitrary name - we use 'AUTONOMOUS' and 'TELEOP'"
+          type: string
+          minLength: 1
+          maxLength: 64
+          example: autonomous
+        objective:
+          description: Can be any arbitrary name
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: HIGH_GOAL_2024
+        count:
+          description: "Typically used to count the number of times the objective
+            was scored, i.e. 'scored 6 high goals'"
+          type: integer
+          format: int32
+          example: 6
+        list:
+          description: "Sometimes, `count` is not sufficient to represent an
+            objective. In 2023, we used a list of 27 numbers to represent pieces
+            placed on the grid."
+          type: array
+          maxLength: 128
+          items:
+            type: integer
+            format: int32
+    CreateCommentBulkRequestBody:
+      type: object
+      required: [robotNumber, gameYear, eventCode, matchNumber, creator, comments]
+      properties:
+        robotNumber:
+          $ref: '#/components/schemas/robotNumber'
+        gameYear:
+          $ref: '#/components/schemas/gameYear'
+        eventCode:
+          $ref: '#/components/schemas/eventCode'
+        matchNumber:
+          $ref: '#/components/schemas/matchNumber'
+        creator:
+          $ref: '#/components/schemas/creator'
+        comments:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [topic, content]
+            properties:
+              topic:
+                $ref: '#/components/schemas/commentTopic'
+              content:
+                $ref: '#/components/schemas/commentContent'
+    CommentResponseBody:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/id'
+        teamNumber:
+          $ref: '#/components/schemas/teamNumber'
+        robotNumber:
+          $ref: '#/components/schemas/robotNumber'
+        gameYear:
+          $ref: '#/components/schemas/gameYear'
+        eventCode:
+          $ref: '#/components/schemas/eventCode'
+        secretCode:
+          $ref: '#/components/schemas/secretCode'
+        matchNumber:
+          $ref: '#/components/schemas/matchNumber'
+        creator:
+          $ref: '#/components/schemas/creator'
+        topic:
+          $ref: '#/components/schemas/commentTopic'
+        content:
+          $ref: '#/components/schemas/commentContent'
+        timeCreated:
+          type: string
+          format: date-time
+          description: Time at which this comment was initially received
+          example: '2024-03-14T15:31:42Z'
+    CreateInspectionRequestBody:
+      type: object
+      required: [robotNumber, gameYear, eventCode, questions]
+      properties:
+        robotNumber:
+          $ref: '#/components/schemas/robotNumber'
+        gameYear:
+          $ref: '#/components/schemas/gameYear'
+        eventCode:
+          $ref: '#/components/schemas/eventCode'
+        questions:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [question, answer, creator]
+            properties:
+              question:
+                $ref: '#/components/schemas/inspectionQuestion'
+              answer:
+                $ref: '#/components/schemas/inspectionAnswer'
+              creator:
+                $ref: '#/components/schemas/creator'
+    InspectionResponseBody:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/id'
+        teamNumber:
+          $ref: '#/components/schemas/teamNumber'
+        robotNumber:
+          $ref: '#/components/schemas/robotNumber'
+        gameYear:
+          $ref: '#/components/schemas/gameYear'
+        eventCode:
+          $ref: '#/components/schemas/eventCode'
+        secretCode:
+          $ref: '#/components/schemas/secretCode'
+        question:
+          $ref: '#/components/schemas/inspectionQuestion'
+        answer:
+          $ref: '#/components/schemas/inspectionAnswer'
+        creator:
+          $ref: '#/components/schemas/creator'
+        timeCreated:
+          $ref: '#/components/schemas/unixTimestamp'
+    MatchScheduleBody:
+      type: object
+      properties:
+        matchNumber: '#/components/schemas/matchNumber'
+        red1: '#/components/schemas/teamNumberSchedule'
+        red2: '#/components/schemas/teamNumberSchedule'
+        red3: '#/components/schemas/teamNumberSchedule'
+        blue1: '#/components/schemas/teamNumberSchedule'
+        blue2: '#/components/schemas/teamNumberSchedule'
+        blue3: '#/components/schemas/teamNumberSchedule'
+
+    ErrorModel:
+      type: string
+
+  securitySchemes:
+    tokenSecurity:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Requires a login token

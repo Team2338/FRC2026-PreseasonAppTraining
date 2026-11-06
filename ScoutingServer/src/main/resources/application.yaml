@@ -1,0 +1,17 @@
+server:
+  port: 25575
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gearscout
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: false
+
+jwt:
+  secret: local-dev-key
+  header: Authorization
+
+tba:
+  key: local-dev-no-tba-key

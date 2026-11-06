@@ -1,0 +1,39 @@
+
+._stat-list {
+	--stat-header-height: 52px;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	border-right: 1px solid var(--border-color);
+	overflow-y: auto;
+
+	.stat-list-header {
+		position: sticky;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		top: 0;
+		padding: 16px 16px 0 16px;
+		background-color: #fff;
+		z-index: 999;
+
+		.page-title {
+			line-height: 36px;
+		}
+
+		#clear-button {
+			font-size: 14px;
+			line-height: 20px;
+		}
+	}
+
+	.stat-list-item {
+		margin-right: auto;
+	}
+
+	.stat-list-color-legend {
+		height: 8px;
+		width: 8px;
+		border-radius: 2px;
+	}
+}

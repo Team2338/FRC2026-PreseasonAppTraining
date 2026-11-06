@@ -1,0 +1,39 @@
+
+.team-page {
+	display: flex;
+	flex-direction: row;
+
+	h4 {
+		font-weight: 500;
+		font-size: 18px;
+		line-height: 20px;
+	}
+
+	.team-list-wrapper {
+		min-width: 180px;
+		width: 180px;
+		border-right: 1px solid var(--border-color);
+		overflow-y: auto;
+	}
+
+	.team-detail-wrapper {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		row-gap: 32px;
+		padding: 20px 16px 32px 16px;
+		overflow-y: auto;
+	}
+}
+
+.team-page-failed {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: min(100px, 12vb);
+}
+
+.team-page-mobile {
+	display: flex;
+	flex-direction: column;
+}

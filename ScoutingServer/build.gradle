@@ -1,0 +1,43 @@
+buildscript {
+	repositories {
+		mavenCentral()
+		maven {
+			url = "https://plugins.gradle.org/m2/"
+		}
+	}
+	dependencies {
+		classpath 'org.springframework.boot:spring-boot-gradle-plugin:4.0.6'
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'team.gif'
+version = '3.8.3'
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-flyway'
+	implementation group: 'org.flywaydb', name: 'flyway-database-postgresql'
+
+	implementation "org.json:json:20251224"
+
+	implementation 'org.apache.logging.log4j:log4j-api:2.25.4'
+	runtimeOnly 'org.apache.logging.log4j:log4j-core:2.25.4'
+
+	runtimeOnly group: 'org.postgresql', name: 'postgresql'
+}

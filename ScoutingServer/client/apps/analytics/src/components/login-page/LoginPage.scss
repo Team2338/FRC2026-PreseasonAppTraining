@@ -1,0 +1,73 @@
+.login-page {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	.content-wrapper {
+		margin-top: 48px;
+		height: fit-content;
+		width: fit-content;
+		border-radius: 12px;
+		box-shadow:
+			0 2px 4px -1px rgb(0 0 0 / 20%),
+			0 4px 5px 0 rgb(0 0 0 / 14%),
+			0 1px 10px 0 rgb(0 0 0 / 12%);
+	}
+
+	&-form {
+		display: flex;
+		flex-direction: column;
+		min-width: 20rem;
+		padding: 16px;
+
+		&-submit {
+			margin-top: 16px !important;
+		}
+
+		.title {
+			margin: 0;
+			padding-bottom: 12px;
+			font-weight: 500;
+			font-size: 34px;
+			line-height: 40px;
+			letter-spacing: 0.00735em;
+		}
+	}
+
+	&-title-row {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		row-gap: 8px;
+		column-gap: 20px;
+		padding-bottom: 8px;
+
+		#game-year-input {
+			min-width: 5em;
+		}
+	}
+
+	.link-section {
+		display: flex;
+		flex-direction: column;
+		padding-top: 40px;
+		row-gap: 8px;
+	}
+
+	&__variant-link {
+		color: #1976D2;
+		width: fit-content;
+		background-color: transparent;
+		border: 0;
+		font-family: inherit;
+		font-weight: 500;
+		font-size: 1rem;
+		line-height: 1.25;
+		padding: 0;
+		outline-offset: 1px;
+		cursor: pointer;
+	}
+}
